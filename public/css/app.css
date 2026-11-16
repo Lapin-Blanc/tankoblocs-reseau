@@ -269,6 +269,7 @@ input[type="range"] { accent-color: var(--brand); }
 .tank-list .actions { display: flex; gap: 4px; }
 .tank-list .actions .btn.small { padding: 3px 7px; }
 .tank-list.examples li { align-items: flex-start; }
+.tank-list.examples .name { white-space: normal; }
 .tank-list.examples .dot { margin-top: 4px; }
 
 /* ---------- Arène ---------- */

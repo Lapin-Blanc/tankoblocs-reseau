@@ -12,7 +12,8 @@ import { runFast } from './sim/runner.js';
 
 export function registerApi(router, { db, store, sessions, lobby, version, config }) {
   const loginLimiter = new RateLimiter(10, 10 * 60 * 1000);
-  const registerLimiter = new RateLimiter(20, 10 * 60 * 1000);
+  // large : avec Docker Desktop, toute la classe peut arriver avec la même adresse IP
+  const registerLimiter = new RateLimiter(100, 10 * 60 * 1000);
   const replays = new ReplayCache(8);
 
   /* ---------- Outils ---------- */

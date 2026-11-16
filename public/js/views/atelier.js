@@ -18,6 +18,27 @@ export async function mount(container, { args, query }) {
   return viewUser ? mountReadOnly(container, viewUser) : mountEditor(container, Number(args[0]) || null);
 }
 
+/** Range les blocs s'ils se chevauchent (sans toucher à une disposition choisie). Renvoie true si rangé. */
+function tidy(ws) {
+  // Blockly dessine les blocs en différé : il faut leur taille réelle avant de comparer
+  window.Blockly.renderManagement.triggerQueuedRenders(ws);
+  const boxes = ws.getTopBlocks(false).map((b) => b.getBoundingRectangle());
+  const overlap = boxes.some((a, i) => boxes.some((b, j) => j > i
+    && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom));
+  if (!overlap) return false;
+  // en lecture seule, Blockly refuse de déplacer les blocs : on lève le verrou le temps du rangement
+  const readOnly = ws.isReadOnly();
+  window.Blockly.Events.disable();
+  if (readOnly) ws.setIsReadOnly(false);
+  try {
+    ws.cleanUp();
+  } finally {
+    if (readOnly) ws.setIsReadOnly(true);
+    window.Blockly.Events.enable();
+  }
+  return true;
+}
+
 /* ================= Éditeur ================= */
 
 async function mountEditor(container, wantedId) {
@@ -205,29 +226,25 @@ async function mountEditor(container, wantedId) {
       window.Blockly.Events.enable();
       loading = false;
     }
-    tidyIfOverlapping();
     ws.clearUndo();
-    ws.scrollCenter();
     nameInput.value = t.name;
     setColor(t.color, false);
     setSave('ok', '✓ Enregistré');
     dirty = false;
+    tidyIfOverlapping();
+    ws.scrollCenter();
     checkHats();
     if (!codePanel.hidden) updateCode();
     history.replaceState(null, '', '#/atelier/' + t.id);
     renderList();
   }
 
-  /** Les modèles et les exemples arrivent empilés : on les range (sans toucher à une disposition choisie). */
+  /** Les modèles et les exemples arrivent empilés : on les range une fois pour toutes. */
   function tidyIfOverlapping() {
-    const boxes = ws.getTopBlocks(false).map((b) => b.getBoundingRectangle());
-    const overlap = boxes.some((a, i) => boxes.some((b, j) => j > i
-      && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom));
-    if (!overlap) return;
     loading = true;
-    window.Blockly.Events.disable();
-    try { ws.cleanUp(); } finally {
-      window.Blockly.Events.enable();
+    try {
+      if (tidy(ws)) markDirty();
+    } finally {
       loading = false;
     }
   }
@@ -420,6 +437,7 @@ async function mountReadOnly(container, userId) {
     shown = t;
     ws.clear();
     try { window.Blockly.serialization.workspaces.load(t.workspace || {}, ws); } catch (err) { toast(err.message, 'error'); }
+    tidy(ws);
     ws.scrollCenter();
     fill(title, dot(t.color), ' ', t.name, h('span', { class: 'muted small' }, ' — modifié ' + formatDate(t.updatedAt)));
     for (const li of list.children) li.classList.toggle('current', li.dataset.id === String(t.id));

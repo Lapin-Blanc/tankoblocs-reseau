@@ -1,0 +1,16 @@
+{
+  "source": "https://github.com/Lapin-Blanc/tankoblocs",
+  "commit": "8038fb1bb81c1524d8bba74d1627336f5ca05f75",
+  "date": "2026-11-15T21:39:55+01:00",
+  "modifiedLocally": false,
+  "files": [
+    "js/engine.js",
+    "js/runtime.js",
+    "js/blocks.js",
+    "js/bots.js",
+    "js/renderer.js",
+    "js/audio.js",
+    "guide.html",
+    "guide.css"
+  ]
+}

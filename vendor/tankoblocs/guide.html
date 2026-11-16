@@ -1,0 +1,123 @@
+<h2 id="g-arene">🗺️ L'arène</h2>
+<div class="two-cols">
+  <div>
+    <p>L'arène mesure <strong>1024 × 640 pixels</strong>. Son centre est le point <strong>(0, 0)</strong> :</p>
+    <ul>
+      <li><strong>x</strong> va de −512 (bord gauche) à 512 (bord droit) ;</li>
+      <li><strong>y</strong> va de −320 (bas) à 320 (haut).</li>
+    </ul>
+    <p>Les angles sont en <strong>degrés</strong>, comme en mathématiques : 0° vers la droite, 90° vers le haut, 180° vers la gauche, 270° vers le bas. « Gauche ↺ » veut dire « dans le sens inverse des aiguilles d'une montre ».</p>
+    <p>Les blocs de maths (sinus, cosinus, atan2…) utilisent les mêmes degrés.</p>
+  </div>
+  <figure class="diagram">
+    <svg viewBox="0 0 260 190" role="img" aria-label="Repère : x vers la droite, y vers le haut, angles de 0 à 270 degrés">
+      <rect x="10" y="10" width="240" height="150" rx="4" class="d-arena"/>
+      <line x1="10" y1="85" x2="250" y2="85" class="d-axis"/>
+      <line x1="130" y1="10" x2="130" y2="160" class="d-axis"/>
+      <text x="236" y="80" class="d-label">x</text>
+      <text x="135" y="22" class="d-label">y</text>
+      <text x="134" y="98" class="d-small">(0, 0)</text>
+      <text x="12" y="176" class="d-small">(−512, −320)</text>
+      <text x="190" y="176" class="d-small">(512, 320) ↗</text>
+      <g transform="translate(130 85)">
+        <circle r="34" class="d-circle"/>
+        <line x1="0" y1="0" x2="44" y2="0" class="d-ray"/>
+        <line x1="0" y1="0" x2="0" y2="-44" class="d-ray"/>
+        <line x1="0" y1="0" x2="-44" y2="0" class="d-ray"/>
+        <line x1="0" y1="0" x2="0" y2="44" class="d-ray"/>
+        <text x="48" y="-4" class="d-angle">0°</text>
+        <text x="4" y="-48" class="d-angle">90°</text>
+        <text x="-74" y="-4" class="d-angle">180°</text>
+        <text x="4" y="58" class="d-angle">270°</text>
+        <path d="M 24 -8 A 25 25 0 0 0 8 -24" class="d-arc"/>
+      </g>
+    </svg>
+  </figure>
+</div>
+
+<h2 id="g-temps">⏱️ Les ticks et la file d'ordres</h2>
+<p>Le temps avance par petits pas appelés <strong>ticks</strong> : il y en a <strong>60 par seconde</strong>. À chaque tick, chaque tank exécute <strong>un seul ordre</strong> (par exemple « avancer » ou « avancer + tourner + tirer »).</p>
+<p>Chaque tank possède une <strong>file d'ordres</strong>, comme une liste de choses à faire. Les blocs d'action n'agissent pas tout de suite : ils <em>ajoutent des ordres</em> dans la file. « avancer pendant 60 ticks » ajoute 60 ordres « avancer ».</p>
+<div class="steps">
+  <div class="step"><b>1</b><span>Si la file d'un tank est vide, son bloc <strong>🔁 quand je n'ai plus d'ordres</strong> est exécuté pour la remplir.</span></div>
+  <div class="step"><b>2</b><span>Chaque tank exécute le premier ordre de sa file.</span></div>
+  <div class="step"><b>3</b><span>Les tanks et les obus se déplacent ; on calcule les chocs et ce que voient les radars.</span></div>
+  <div class="step"><b>4</b><span>Les <strong>événements</strong> (radar, touché, impact) sont envoyés aux tanks. Les ordres ajoutés par un événement passent <strong>en tête de file</strong>.</span></div>
+</div>
+<p>💡 Au début d'un événement, le bloc <strong>❌ annuler les ordres prévus</strong> permet d'oublier ce qui était prévu pour réagir tout de suite.</p>
+<table class="ref">
+  <thead><tr><th>Mesure</th><th>Valeur</th></tr></thead>
+  <tbody>
+    <tr><td>Vitesse du tank</td><td>100 pixels par seconde (≈ 1,67 pixel par tick)</td></tr>
+    <tr><td>Rotation (tank, canon ou radar)</td><td>54° par seconde (0,9° par tick)</td></tr>
+    <tr><td>Vitesse d'un obus</td><td>200 pixels par seconde (≈ 3,33 pixels par tick)</td></tr>
+    <tr><td>Recharge du canon</td><td>60 ticks (1 seconde) entre deux tirs</td></tr>
+    <tr><td>Rayon d'un tank / d'un obus</td><td>19 pixels / 5 pixels</td></tr>
+  </tbody>
+</table>
+
+<h2 id="g-tank">🛡️ Anatomie du tank</h2>
+<ul>
+  <li><strong>Le châssis</strong> (le tank) : il avance, recule et tourne.</li>
+  <li><strong>Le canon</strong> est posé sur le châssis. S'il est <em>verrouillé</em>, il tourne avec le châssis.</li>
+  <li><strong>Le radar</strong> est posé sur le canon. S'il est <em>verrouillé</em>, il tourne avec le canon.</li>
+</ul>
+<p>Au départ, tout est verrouillé : le canon et le radar regardent dans la même direction que le tank. <strong>Déverrouille</strong> le canon pour pouvoir viser dans une direction et rouler dans une autre. Garder le radar verrouillé sur le canon est souvent malin : quand le radar voit une cible, le canon est déjà pointé vers elle !</p>
+<p>Le radar est un faisceau très fin (moins de 2°) qui traverse toute l'arène. Il ne détecte un objet qu'au moment où celui-ci <strong>entre</strong> dans le faisceau : pour suivre une cible, il faut donc balayer de part et d'autre.</p>
+
+<h2 id="g-evenements">📣 Les événements</h2>
+<table class="ref">
+  <thead><tr><th>Bloc</th><th>Quand ?</th></tr></thead>
+  <tbody>
+    <tr><td>🚦 au démarrage de la partie</td><td>Une fois, au début. Pour préparer les variables, déverrouiller le canon…</td></tr>
+    <tr><td>🔁 quand je n'ai plus d'ordres</td><td>Chaque fois que la file d'ordres est vide : c'est le programme principal.</td></tr>
+    <tr><td>📡 quand mon radar détecte…</td><td>Un tank, un obus ennemi ou un mur entre dans le faisceau du radar.</td></tr>
+    <tr><td>💥 quand je suis touché par…</td><td>Un obus me touche, ou je heurte un tank ou un mur.</td></tr>
+    <tr><td>🎯 quand mon obus touche…</td><td>Un de mes obus atteint un tank, un obus ou un mur.</td></tr>
+  </tbody>
+</table>
+<p>Dans ces trois derniers blocs, les blocs violets <strong>« objet : … »</strong> décrivent l'objet concerné : sa position, sa distance, l'angle pour le viser, sa vitesse (en pixels par tick), son nom… Pour un mur, la position est le point du mur touché (ou visé par le radar) et la direction est perpendiculaire au mur, vers l'intérieur de l'arène.</p>
+
+<h2 id="g-degats">💯 Dégâts et victoire</h2>
+<ul>
+  <li>Chaque tank commence avec <strong>100 points de santé</strong>.</li>
+  <li>Un obus reçu, un choc contre un mur ou contre un autre tank : <strong>−10</strong>.</li>
+  <li>À 0, le tank est détruit et reste sur place comme une épave.</li>
+  <li>La partie s'arrête quand il ne reste qu'un tank, ou quand le temps est écoulé.</li>
+  <li><strong>Le vainqueur est celui qui a infligé le plus de dégâts</strong> avec ses obus. En cas d'égalité : le plus de santé restante, puis le plus long temps de survie.</li>
+</ul>
+<p>Si un programme provoque une erreur (ou une boucle sans fin), le tank tombe <strong>en panne</strong> ⚠ : il ne bouge plus jusqu'à la fin de la partie. Le journal indique ce qui s'est passé.</p>
+
+<h2 id="g-blocs">🧩 Les blocs</h2>
+<h3>Mouvement</h3>
+<dl class="blocks-ref">
+  <dt><span class="b b-move">avancer pendant 60 ticks</span></dt><dd>Avance (ou recule) pendant un nombre de ticks.</dd>
+  <dt><span class="b b-move">avancer de 100 pixels</span></dt><dd>Avance d'une distance (le nombre de ticks est calculé pour toi).</dd>
+  <dt><span class="b b-move">tourner le canon vers la gauche de 90 °</span></dt><dd>Tourne le tank, le canon ou le radar d'un angle donné. Il existe aussi la version « pendant … ticks ».</dd>
+  <dt><span class="b b-move">orienter le canon vers l'angle 90 °</span></dt><dd>Tourne par le chemin le plus court pour viser un angle précis. Tient compte des rotations déjà prévues dans le même événement.</dd>
+  <dt><span class="b b-move">orienter le canon vers le point x … y …</span></dt><dd>Vise un point. Avec « objet : x » et « objet : y », vise l'objet détecté.</dd>
+  <dt><span class="b b-move">pendant 60 ticks, en même temps : …</span></dt><dd>Combine dans chaque tick un déplacement, trois rotations et un tir (le tir part dès que le canon est prêt).</dd>
+  <dt><span class="b b-move">⏳ attendre 30 ticks</span></dt><dd>Ne rien faire.</dd>
+</dl>
+<h3>Canon et radar</h3>
+<dl class="blocks-ref">
+  <dt><span class="b b-weapon">🔥 tirer maintenant</span></dt><dd>Tire si le canon est prêt (sinon, rien ne se passe). « dès que le canon est prêt » attend la fin de la recharge.</dd>
+  <dt><span class="b b-weapon">❌ annuler les ordres prévus</span></dt><dd>Vide la file d'ordres immédiatement.</dd>
+  <dt><span class="b b-weapon">🔓 déverrouiller le canon</span></dt><dd>Le canon ne suit plus les rotations du tank (même chose pour le radar et le canon).</dd>
+  <dt><span class="b b-weapon">🌑 éteindre le radar</span></dt><dd>Plus aucun événement radar tant qu'il est éteint.</dd>
+</dl>
+<h3>Capteurs</h3>
+<p>Ma position, mes directions, ma santé, la recharge, le temps restant, le nombre d'adversaires en vie… mais aussi « angle vers x y », « distance jusqu'à x y » et « écart d'angle de … vers … » (entre −180 et 180) pour faire de la géométrie sans se fatiguer.</p>
+<h3>Journal</h3>
+<p>« 💬 dire » affiche une bulle au-dessus du tank ; « 📝 afficher » écrit dans le journal de l'arène. Très pratique pour comprendre ce que fait le programme !</p>
+
+<h2 id="g-astuces">🧠 Astuces</h2>
+<ul>
+  <li><strong>Garder la cible dans le radar :</strong> après chaque détection, fais repartir le canon (et donc le radar) un peu en arrière. Il repassera aussitôt sur la cible : c'est le secret de la Sentinelle.</li>
+  <li><strong>Viser une cible qui bouge :</strong> l'obus met <em>distance ÷ 3,33</em> ticks pour arriver. Pendant ce temps, la cible se déplace de <em>vitesse × temps</em>. Vise donc le point <em>x + vitesse x × temps</em>, <em>y + vitesse y × temps</em>. Comme les tanks changent souvent de direction, le Chasseur n'anticipe que la moitié de ce temps.</li>
+  <li><strong>Ne pas foncer dans les murs :</strong> chaque choc coûte 10 points. Le capteur « près d'un mur ? » prévient avant qu'il soit trop tard.</li>
+  <li><strong>Rouler et chercher en même temps :</strong> le bloc « en même temps » permet d'avancer tout en faisant tourner le canon (voir le Vagabond).</li>
+  <li><strong>Ne pas gaspiller de ticks :</strong> « tirer maintenant » quand le canon n'est pas prêt fait perdre un tick. Vérifie d'abord « canon prêt à tirer ? ».</li>
+  <li><strong>Déboguer :</strong> coche « Ordres » sous l'arène pour voir l'ordre exécuté et la longueur de la file, avance tick par tick avec « ⏭ Un tick », et utilise « afficher ».</li>
+  <li><strong>Comparer deux versions :</strong> le championnat express fait jouer de nombreuses manches pour savoir quel tank est vraiment le meilleur.</li>
+</ul>

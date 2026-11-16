@@ -1,0 +1,12 @@
+TankoBlocs
+Copyright 2026 Fabien Toune
+
+Distribué sous licence Apache 2.0 (voir le fichier LICENSE).
+
+Ce produit inclut Blockly (https://github.com/google/blockly),
+Copyright Google LLC, distribué sous licence Apache 2.0
+(voir vendor/blockly/LICENSE et vendor/blockly/NOTICE.txt).
+
+Les règles du jeu sont inspirées du projet code-tanks
+(https://github.com/code-tanks/code-tanks), distribué sous licence Apache 2.0.
+Aucun fichier de ce projet n'est repris.

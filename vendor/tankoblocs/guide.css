@@ -1,0 +1,63 @@
+.lead { font-size: 15.5px; }
+.guide-body {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.guide-body h1 { font-size: 30px; margin: 6px 0 8px; }
+.guide-body h2 { margin-top: 34px; padding-bottom: 6px; border-bottom: 1px solid var(--border); scroll-margin-top: 10px; }
+.guide-body h3 { margin-top: 20px; color: var(--brand-2); }
+.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 6px; }
+.toc a {
+  text-decoration: none;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 11px;
+  font-size: 13px;
+}
+.toc a:hover { border-color: var(--brand); }
+.two-cols { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; align-items: start; }
+.diagram { margin: 10px 0; background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; }
+.diagram svg { width: 100%; height: auto; display: block; }
+.d-arena { fill: #1f2c2a; stroke: #4f6266; stroke-width: 2; }
+.d-axis { stroke: #6f8a8a; stroke-width: 1; stroke-dasharray: 3 3; }
+.d-circle { fill: none; stroke: #4f6266; }
+.d-ray { stroke: var(--brand); stroke-width: 2; }
+.d-arc { fill: none; stroke: var(--brand-2); stroke-width: 1.5; }
+.d-label { fill: var(--text); font: 700 12px var(--font); }
+.d-small { fill: var(--muted); font: 10px var(--font); }
+.d-angle { fill: var(--brand-2); font: 700 11px var(--font); }
+.steps { display: grid; gap: 8px; margin: 12px 0; }
+.step { display: flex; gap: 12px; align-items: flex-start; background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+.step b {
+  flex: 0 0 auto;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.blocks-ref { display: grid; grid-template-columns: max-content 1fr; gap: 8px 14px; align-items: center; }
+.blocks-ref dt { margin: 0; }
+.blocks-ref dd { margin: 0; color: #cdd7db; }
+.b {
+  display: inline-block;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.b-move { background: #3c7dd9; }
+.b-weapon { background: #c94c4c; }
+.b-event { background: #d9822b; }
+.b-sensor { background: #16a085; }
+.b-object { background: #9b59b6; }
+.b-logic { background: #5b80a5; }
+.b-var { background: #a55b80; }
+.b-tools { background: #6c7a89; }

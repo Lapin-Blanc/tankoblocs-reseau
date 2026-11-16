@@ -403,6 +403,13 @@
       }
       let code = gen.finish(parts.join('\n'));
       code = code.replace(/^\s+\n/, '').replace(/\n\s+$/, '\n').replace(/[ \t]+\n/g, '\n');
+      // Blockly recopie le texte des commentaires de blocs en « // … » et ne
+      // les découpe qu'aux sauts de ligne (\n). Un retour chariot, U+2028 ou
+      // U+2029 y terminerait le commentaire et la suite deviendrait du code
+      // (piège possible dans un fichier .tank.json importé). On les remplace
+      // par des espaces partout : dans un texte, ils rendaient de toute façon
+      // le programme invalide.
+      code = code.replace(/[\r\u2028\u2029]/g, ' ');
       return code;
     } finally {
       gen.INFINITE_LOOP_TRAP = previous;

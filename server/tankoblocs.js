@@ -37,13 +37,13 @@ const COMPILER_SOURCES = SIM_SOURCES.concat([
 ]);
 
 /**
- * Version des règles : empreinte du moteur, de l'exécution, des blocs et
- * des tanks d'exemple. Un combat rejoué avec une autre version peut se
- * dérouler autrement.
+ * Version des règles : empreinte du moteur et de l'exécution des programmes.
+ * Un replay recalcule le combat à partir du code figé au départ : seuls ces
+ * deux fichiers peuvent changer son déroulement (pas les blocs ni les bots).
  */
 export const ENGINE_VERSION = crypto
   .createHash('sha256')
-  .update(COMPILER_SOURCES.map(([, s]) => s).join('\n'))
+  .update(SIM_SOURCES.map(([, s]) => s).join('\n'))
   .digest('hex')
   .slice(0, 12);
 

@@ -27,7 +27,9 @@ export const config = {
   matchMemoryMb: int('MATCH_MEMORY_MB', 128),
   /** Nombre de combats terminés gardés dans le salon. */
   recentMatches: int('RECENT_MATCHES', 12),
-  log: process.env.LOG_LEVEL || 'info',
+  /** Adresse à donner aux élèves (utile avec Docker, où le serveur ne voit pas l'adresse de l'ordinateur). */
+  publicUrl: process.env.PUBLIC_URL || '',
+  inDocker: !!process.env.IN_DOCKER,
 };
 
 /** Réglages modifiables dans l'administration (valeurs par défaut). */

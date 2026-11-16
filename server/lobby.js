@@ -92,7 +92,7 @@ export class Lobby {
   }
 
   disconnect(client) {
-    if (!this.clients.delete(client)) return;
+    if (!this.clients.delete(client) || this.closed) return;
     this.unwatch(client);
     const entry = this.online.get(client.user.id);
     if (entry) {
@@ -627,7 +627,7 @@ export class Lobby {
   }
 
   startQueued() {
-    while (this.queue.length && this.runningCount() < this.settings().maxRunningMatches) {
+    while (!this.closed && this.queue.length && this.runningCount() < this.settings().maxRunningMatches) {
       const m = this.matches.get(this.queue[0]);
       if (!m || m.status !== 'queued') {
         this.queue.shift();
@@ -743,11 +743,11 @@ export class Lobby {
     const matches = [...this.matches.values()]
       .map((m) => this.summary(m))
       .sort((a, b) => (order[a.status] - order[b.status]) || ((b.endedAt || b.createdAt) - (a.endedAt || a.createdAt)));
-    return { type: 'lobby', now: Date.now(), players, matches };
+    return { type: 'lobby', now: Date.now(), players, matches, settings: this.publicSettings() };
   }
 
   scheduleBroadcast() {
-    if (this.broadcastTimer) return;
+    if (this.broadcastTimer || this.closed) return;
     this.broadcastTimer = setTimeout(() => {
       this.broadcastTimer = null;
       const s = JSON.stringify(this.lobbyState());
@@ -762,11 +762,14 @@ export class Lobby {
 
   /** Arrêt du serveur : les combats en cours sont notés comme interrompus. */
   shutdown() {
+    this.closed = true;
     clearInterval(this.heartbeat);
     for (const m of this.matches.values()) {
       if (m.status === 'running') this.abortRunning(m, 'Combat interrompu (le serveur s\'est arrêté).');
       clearTimeout(m.timer);
     }
+    clearTimeout(this.broadcastTimer);
+    for (const e of this.online.values()) clearTimeout(e.grace);
     for (const c of this.clients) c.ws.close(1001, 'arrêt du serveur');
   }
 }

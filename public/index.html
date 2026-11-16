@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TankoBlocs Réseau</title>
+  <meta name="description" content="Programme ton tank avec des blocs et affronte les autres joueurs en direct.">
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/vendor/tankoblocs/guide.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <a class="brand" href="#/combats" aria-label="TankoBlocs Réseau, accueil">
+      <img class="logo" src="/img/logo.svg" alt="">
+      <span>Tanko<b>Blocs</b> <small>Réseau</small></span>
+    </a>
+    <nav class="tabs" id="nav" aria-label="Sections" hidden></nav>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+
+  <main id="main">
+    <div class="boot" id="boot">Chargement…</div>
+  </main>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <noscript><p class="boot">TankoBlocs Réseau a besoin de JavaScript.</p></noscript>
+
+  <script src="/vendor/blockly/blockly_compressed.js"></script>
+  <script src="/vendor/blockly/blocks_compressed.js"></script>
+  <script src="/vendor/blockly/javascript_compressed.js"></script>
+  <script src="/vendor/blockly/msg/fr.js"></script>
+  <script src="/vendor/tankoblocs/js/engine.js"></script>
+  <script src="/vendor/tankoblocs/js/runtime.js"></script>
+  <script src="/vendor/tankoblocs/js/blocks.js"></script>
+  <script src="/vendor/tankoblocs/js/bots.js"></script>
+  <script src="/vendor/tankoblocs/js/renderer.js"></script>
+  <script src="/vendor/tankoblocs/js/audio.js"></script>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

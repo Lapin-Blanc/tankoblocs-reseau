@@ -1,0 +1,16 @@
+TankoBlocs Réseau
+Copyright 2026 Fabien Toune
+
+Distribué sous licence Apache 2.0 (voir le fichier LICENSE).
+
+Ce produit inclut des fichiers de TankoBlocs
+(https://github.com/Lapin-Blanc/tankoblocs), Copyright 2026 Fabien Toune,
+distribué sous licence Apache 2.0 (voir vendor/tankoblocs/).
+
+Ce produit utilise Blockly (https://github.com/google/blockly),
+Copyright Google LLC, distribué sous licence Apache 2.0,
+et ws (https://github.com/websockets/ws), distribué sous licence MIT.
+
+Les règles du jeu sont inspirées du projet code-tanks
+(https://github.com/code-tanks/code-tanks), distribué sous licence Apache 2.0.
+Aucun fichier de ce projet n'est repris.

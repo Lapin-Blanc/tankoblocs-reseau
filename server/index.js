@@ -8,14 +8,13 @@
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs';
-import os from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { config, ROOT } from './config.js';
 import { Db } from './db.js';
 import { Store } from './store.js';
 import { Sessions, parseCookies, COOKIE } from './auth.js';
-import { Router, StaticFiles, sendJson, sendError, sameOrigin, SECURITY_HEADERS } from './http.js';
+import { Router, StaticFiles, sendJson, sendError, sameOrigin, SECURITY_HEADERS, lanAddresses } from './http.js';
 import { registerApi } from './api.js';
 import { Lobby } from './lobby.js';
 
@@ -38,7 +37,7 @@ export function createApp(opts = {}) {
   const lobby = new Lobby({ store, db, config: cfg });
 
   const router = new Router();
-  registerApi(router, { db, store, sessions, lobby, version: PKG.version });
+  registerApi(router, { db, store, sessions, lobby, version: PKG.version, config: cfg });
 
   const blocklyDir = path.join(ROOT, 'node_modules', 'blockly');
   const statics = new StaticFiles([
@@ -120,24 +119,16 @@ export function createApp(opts = {}) {
   return { server, db, store, sessions, lobby, close, config: cfg };
 }
 
-/** Adresses où les élèves peuvent joindre le serveur. */
-function lanAddresses(port) {
-  const out = [];
-  for (const list of Object.values(os.networkInterfaces())) {
-    for (const a of list || []) {
-      if (a.family === 'IPv4' && !a.internal) out.push('http://' + a.address + ':' + port);
-    }
-  }
-  return out;
-}
-
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const app = createApp();
   app.server.listen(config.port, config.host, () => {
     console.log('TankoBlocs Réseau ' + PKG.version + ' : prêt sur le port ' + config.port);
-    const addrs = lanAddresses(config.port);
-    if (addrs.length && !process.env.IN_DOCKER) console.log('Les joueurs peuvent ouvrir : ' + addrs.join('  ou  '));
-    if (process.env.IN_DOCKER) console.log('Les joueurs ouvrent http://<adresse de cet ordinateur>:' + (process.env.PUBLIC_PORT || config.port));
+    if (config.publicUrl) console.log('Les joueurs ouvrent : ' + config.publicUrl);
+    else if (config.inDocker) console.log('Les joueurs ouvrent http://<adresse de cet ordinateur>:' + (process.env.PUBLIC_PORT || config.port));
+    else {
+      const addrs = lanAddresses(config.port);
+      if (addrs.length) console.log('Les joueurs peuvent ouvrir : ' + addrs.join('  ou  '));
+    }
     if (app.store.countUsers() === 0) console.log('Premier lancement : ouvrez la page pour créer le compte enseignant.');
   });
   let stopping = false;

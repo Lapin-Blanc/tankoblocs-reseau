@@ -9,9 +9,11 @@
     "node": ">=24"
   },
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
-    "test": "node --test test/",
+    "start": "node --disable-warning=ExperimentalWarning server/index.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/",
+    "demo": "node --disable-warning=ExperimentalWarning scripts/demo.js",
+    "cli": "node --disable-warning=ExperimentalWarning server/cli.js",
     "sync-tankoblocs": "node scripts/sync-tankoblocs.js"
   },
   "dependencies": {

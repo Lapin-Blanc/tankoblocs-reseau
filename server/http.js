@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import os from 'node:os';
 import { UserError } from './auth.js';
 
 export const SECURITY_HEADERS = {
@@ -225,4 +226,15 @@ export function sameOrigin(req) {
 
 export function clientIp(req) {
   return req.socket.remoteAddress || '?';
+}
+
+/** Adresses de cet ordinateur sur le réseau local (IPv4). */
+export function lanAddresses(port) {
+  const out = [];
+  for (const list of Object.values(os.networkInterfaces())) {
+    for (const a of list || []) {
+      if (a.family === 'IPv4' && !a.internal) out.push('http://' + a.address + ':' + port);
+    }
+  }
+  return out;
 }

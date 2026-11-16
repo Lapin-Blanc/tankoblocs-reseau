@@ -6,11 +6,11 @@ import {
   hashPassword, verifyPassword, cleanPseudo, checkPassword, UserError, publicUser,
   parseCookies, sessionCookie, clearCookie, COOKIE, RateLimiter, temporaryPassword,
 } from './auth.js';
-import { readJson, sendJson, clientIp } from './http.js';
+import { readJson, sendJson, clientIp, lanAddresses } from './http.js';
 import { publicBots, ENGINE_VERSION, TANKOBLOCS, TEMPLATE } from './tankoblocs.js';
 import { runFast } from './sim/runner.js';
 
-export function registerApi(router, { db, store, sessions, lobby, version }) {
+export function registerApi(router, { db, store, sessions, lobby, version, config }) {
   const loginLimiter = new RateLimiter(10, 10 * 60 * 1000);
   const registerLimiter = new RateLimiter(20, 10 * 60 * 1000);
   const replays = new ReplayCache(8);
@@ -337,6 +337,17 @@ export function registerApi(router, { db, store, sessions, lobby, version }) {
     const settings = db.setSettings(body);
     lobby.scheduleBroadcast();
     ok(req, res, { settings });
+  });
+
+  // adresses à donner aux élèves
+  router.get('/api/admin/network', (req, res) => {
+    teacher(req);
+    ok(req, res, {
+      publicUrl: config.publicUrl || null,
+      inDocker: config.inDocker,
+      addresses: config.inDocker ? [] : lanAddresses(config.port),
+      port: Number(process.env.PUBLIC_PORT) || config.port,
+    });
   });
 
   router.get('/api/admin/live', (req, res) => {

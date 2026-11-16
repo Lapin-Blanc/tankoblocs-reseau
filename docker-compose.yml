@@ -1,0 +1,28 @@
+# TankoBlocs Réseau
+#
+#   docker compose up -d          démarrer (en arrière-plan)
+#   docker compose logs -f        voir les messages du serveur
+#   docker compose down           arrêter (les données sont gardées)
+#
+# Réglages facultatifs dans un fichier .env à côté de ce fichier
+# (voir .env.example) : PORT, PUBLIC_URL.
+
+services:
+  tankoblocs:
+    build: .
+    image: tankoblocs-reseau
+    container_name: tankoblocs-reseau
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      PUBLIC_PORT: "${PORT:-8080}"
+      PUBLIC_URL: "${PUBLIC_URL:-}"
+      TZ: "${TZ:-Europe/Brussels}"
+    volumes:
+      - tankoblocs-data:/data
+    stop_grace_period: 10s
+
+volumes:
+  tankoblocs-data:

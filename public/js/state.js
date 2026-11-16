@@ -82,9 +82,33 @@ export function isTeacher() {
 
 /* ---------- Programmes : compilation dans le navigateur (entraînement) ---------- */
 
+/**
+ * Comme sur le serveur : sans les commentaires de blocs, que Blockly recopie
+ * tels quels en « // … » (un retour chariot y deviendrait du code), et sans
+ * caractère de fin de ligne inattendu. Important quand l'enseignant entraîne
+ * le tank copié d'un élève.
+ */
+function safeWorkspace(v) {
+  if (Array.isArray(v)) return v.map(safeWorkspace);
+  if (!v || typeof v !== 'object') return v;
+  const out = {};
+  for (const [k, val] of Object.entries(v)) {
+    if (k === 'comment') continue;
+    if (k === 'icons' && val && typeof val === 'object') {
+      const icons = { ...val };
+      delete icons.comment;
+      out[k] = safeWorkspace(icons);
+      continue;
+    }
+    out[k] = safeWorkspace(val);
+  }
+  return out;
+}
+
 export function compileWorkspace(ws) {
   try {
-    return { code: window.TankBlocks.compileState(ws, true), error: null };
+    const code = window.TankBlocks.compileState(safeWorkspace(ws), true).replace(/[\r\u2028\u2029]/g, ' ');
+    return { code, error: null };
   } catch (err) {
     return { code: '', error: 'programme illisible : ' + ((err && err.message) || err) };
   }

@@ -15,6 +15,9 @@ export function registerApi(router, { db, store, sessions, lobby, version, confi
   // large : avec Docker Desktop, toute la classe peut arriver avec la même adresse IP
   const registerLimiter = new RateLimiter(100, 10 * 60 * 1000);
   const replays = new ReplayCache(8);
+  const replayLimiter = new RateLimiter(30, 60 * 1000);
+  const replayJobs = new Map(); // uid -> recalcul en cours (partagé entre les demandes)
+  const replaySlots = new Semaphore(2); // au plus deux recalculs en même temps
 
   /* ---------- Outils ---------- */
 
@@ -206,25 +209,13 @@ export function registerApi(router, { db, store, sessions, lobby, version, confi
     if (d.status !== 'finished') throw new UserError('Seuls les combats terminés peuvent être revus.', 409);
     let entry = replays.get(d.uid);
     if (!entry) {
-      const row = store.getMatchRow(d.uid);
-      const parts = store.getParticipants(row.id);
-      let sim;
-      try {
-        sim = await runFast({
-          entrants: parts.map((x) => ({ name: x.name, color: x.color, code: x.code, error: x.error || null })),
-          seed: row.seed,
-          maxTicks: row.max_ticks,
-        });
-      } catch (err) {
-        throw new UserError('Impossible de recalculer ce combat (' + (err.reason || err.message) + ').', 500);
+      if (!replayLimiter.allow('replay:' + me.id)) throw new UserError('Trop de replays demandés : patiente un instant.', 429);
+      let job = replayJobs.get(d.uid);
+      if (!job) {
+        job = replaySlots.run(() => recompute(d)).finally(() => replayJobs.delete(d.uid));
+        replayJobs.set(d.uid, job);
       }
-      // même déroulement qu'en direct ? (sinon : moteur mis à jour entre-temps)
-      const consistent = sim.results.ranking.every((r) => {
-        const x = d.participants.find((q) => q.index === r.index);
-        return x && x.damageDealt === r.damageDealt && x.health === r.health;
-      }) && sim.results.ticks === d.ticks;
-      entry = { frames: '[' + sim.frames.join(',') + ']', logs: sim.logs, consistent };
-      replays.set(d.uid, entry);
+      entry = await job;
     }
     const owners = new Map(d.participants.map((x) => [x.index, x.userId]));
     const logs = entry.logs.filter((l) => l.kind === 'info' || l.tank < 0 || me.role === 'teacher' || owners.get(l.tank) === me.id);
@@ -232,6 +223,32 @@ export function registerApi(router, { db, store, sessions, lobby, version, confi
       + ',"logs":' + JSON.stringify(logs) + ',"frames":' + entry.frames + '}';
     sendJson(req, res, 200, body);
   });
+
+  /** Recalcule un combat terminé (moteur déterministe) et vérifie qu'on retrouve le même résultat. */
+  async function recompute(d) {
+    const cached = replays.get(d.uid);
+    if (cached) return cached;
+    const row = store.getMatchRow(d.uid);
+    const parts = store.getParticipants(row.id);
+    let sim;
+    try {
+      sim = await runFast({
+        entrants: parts.map((x) => ({ name: x.name, color: x.color, code: x.code, error: x.error || null })),
+        seed: row.seed,
+        maxTicks: row.max_ticks,
+      });
+    } catch (err) {
+      throw new UserError('Impossible de recalculer ce combat (' + (err.reason || err.message) + ').', 500);
+    }
+    // même déroulement qu'en direct ? (sinon : moteur mis à jour entre-temps)
+    const consistent = sim.results.ranking.every((r) => {
+      const x = d.participants.find((q) => q.index === r.index);
+      return x && x.damageDealt === r.damageDealt && x.health === r.health;
+    }) && sim.results.ticks === d.ticks;
+    const entry = { frames: '[' + sim.frames.join(',') + ']', logs: sim.logs, consistent };
+    replays.set(d.uid, entry);
+    return entry;
+  }
 
   /* ---------- Classement ---------- */
 
@@ -355,6 +372,27 @@ export function registerApi(router, { db, store, sessions, lobby, version, confi
     teacher(req);
     ok(req, res, { matches: lobby.runningMatches() });
   });
+}
+
+/** Limite le nombre de tâches simultanées. */
+class Semaphore {
+  constructor(max) {
+    this.max = max;
+    this.active = 0;
+    this.waiting = [];
+  }
+
+  async run(fn) {
+    while (this.active >= this.max) await new Promise((resolve) => this.waiting.push(resolve));
+    this.active++;
+    try {
+      return await fn();
+    } finally {
+      this.active--;
+      const next = this.waiting.shift();
+      if (next) next();
+    }
+  }
 }
 
 /** Petit cache des replays recalculés (les plus récents). */

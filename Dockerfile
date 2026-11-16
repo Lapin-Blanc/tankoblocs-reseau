@@ -29,4 +29,9 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:8080/api/status').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["node", "server/index.js"]
+# Modèle de permissions de Node : le serveur (et les fils où tournent les
+# combats) ne peut lire que /app et /data, n'écrit que dans /data, et ne peut
+# lancer aucune commande. Une protection de plus autour du bac à sable.
+CMD ["node", "--permission", "--allow-net", "--allow-worker", \
+     "--allow-fs-read=/app", "--allow-fs-read=/data", "--allow-fs-write=/data", \
+     "--disable-warning=SecurityWarning", "server/index.js"]

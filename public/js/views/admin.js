@@ -259,7 +259,7 @@ async function settings(body) {
       num('minDurationSec', 'Durée minimale', 10, 600, 'secondes'),
       num('maxDurationSec', 'Durée maximale', 10, 600, 'secondes'),
       num('maxOpponents', 'Adversaires au plus', 1, 3, '', 'De 1 à 3 (4 tanks au plus dans l\'arène).'),
-      num('countdownSec', 'Décompte avant le départ', 0, 30, 'secondes'),
+      num('countdownSec', 'Décompte avant le départ', 2, 30, 'secondes'),
       num('maxRunningMatches', 'Combats simultanés au plus', 1, 64, '', 'Au-delà, les combats attendent leur tour.'),
       num('maxTanksPerPlayer', 'Tanks par joueur au plus', 1, 200)),
     h('h3', null, 'Inscriptions'),

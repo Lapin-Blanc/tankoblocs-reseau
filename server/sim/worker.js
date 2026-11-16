@@ -5,6 +5,10 @@
  * pas de `process`, pas de `require`, aucun objet du serveur. On n'y fait
  * entrer que des chaînes (JSON) et on n'en fait sortir que des chaînes.
  *
+ * Le module vm n'est pas une barrière de sécurité à toute épreuve : la
+ * première protection est que le serveur compile lui-même les programmes à
+ * partir des blocs (server/tankoblocs.js, safeWorkspace et safeCode).
+ *
  * Protections :
  *  - chaque tick est limité dans le temps (option timeout de vm) ;
  *  - la mémoire du fil est plafonnée (resourceLimits, voir runner.js) ;
@@ -118,7 +122,12 @@ class SimAbort extends Error {
 }
 
 const data = workerData;
-const ctx = vm.createContext({}, { name: 'combat', codeGeneration: { strings: true, wasm: false } });
+// Objet global SANS prototype : avec un objet ordinaire ({}), le code du
+// contexte pourrait remonter globalThis.constructor.constructor jusqu'au
+// Function du serveur, donc jusqu'à process. (vm.constants.DONT_CONTEXTIFY
+// fermerait aussi ce chemin, mais Node n'applique alors plus la limite de
+// mémoire du fil : un programme gourmand bloquerait tout le serveur.)
+const ctx = vm.createContext(Object.create(null), { name: 'combat', codeGeneration: { strings: true, wasm: false } });
 for (const [name, src] of data.sources) new vm.Script(src, { filename: name }).runInContext(ctx);
 new vm.Script(BOOT, { filename: 'boot.js' }).runInContext(ctx);
 const initScript = new vm.Script('__init()', { filename: 'init.js' });

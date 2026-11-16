@@ -4,7 +4,7 @@
  * combat : le serveur et les autres combats continuent.
  */
 import { Worker } from 'node:worker_threads';
-import { SIM_SOURCES } from '../tankoblocs.js';
+import { SIM_SOURCES, safeCode } from '../tankoblocs.js';
 import { config } from '../config.js';
 
 const WORKER_URL = new URL('./worker.js', import.meta.url);
@@ -14,7 +14,8 @@ function spawn(mode, { entrants, seed, maxTicks }) {
     workerData: {
       mode,
       sources: SIM_SOURCES,
-      entrants: entrants.map((e) => ({ name: e.name, color: e.color, code: e.code || '', error: e.error || null })),
+      // safeCode aussi ici : couvre le code compilé et enregistré avant une mise à jour du serveur
+      entrants: entrants.map((e) => ({ name: e.name, color: e.color, code: safeCode(e.code || ''), error: e.error || null })),
       seed,
       maxTicks,
       stepTimeoutMs: config.stepTimeoutMs,

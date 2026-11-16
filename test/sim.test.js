@@ -46,6 +46,39 @@ test('bac à sable : ni process, ni require, ni objets du serveur', async () => 
   assert.equal(said.text, '💬 undefined/undefined/undefined/undefined');
 });
 
+test('bac à sable : pas d\'évasion par le constructeur du global (vm non contextifié)', async () => {
+  const code = "tank.quand('demarrage','tout',function(){ var r = []; "
+    + "try { r.push(typeof globalThis.constructor.constructor('return process')()); } catch (e) { r.push('erreur'); } "
+    + "try { r.push(typeof this.constructor.constructor('return process')()); } catch (e) { r.push('erreur'); } "
+    + "try { r.push(typeof tank.constructor.constructor('return process')()); } catch (e) { r.push('erreur'); } "
+    + "try { r.push(typeof Math.constructor.constructor('return process')()); } catch (e) { r.push('erreur'); } "
+    + "tank.dire(r.join('/')); });";
+  const r = await runFast({ entrants: [{ name: 'A', color: '#ff0000', code }, dummy()], seed: 1, maxTicks: 5 });
+  const said = r.logs.find((l) => l.kind === 'say');
+  assert.ok(!said.text.includes('object'), 'process atteint : ' + said.text);
+});
+
+test('compilation : les commentaires de blocs ne peuvent pas injecter de code', () => {
+  for (const sep of ['\r', '\u2028', '\u2029', '\n']) {
+    const ws = { blocks: { languageVersion: 0, blocks: [{
+      type: 'ct_on_run', x: 0, y: 0,
+      icons: { comment: { text: 'note' + sep + 'tank.dire("INJECTION");', pinned: false, height: 80, width: 160 } },
+      inputs: { DO: { block: { type: 'ct_wait', comment: 'x' + sep + 'tank.dire("ANCIEN");', inputs: { TICKS: { shadow: { type: 'math_number', fields: { NUM: 5 } } } } } } },
+    }] } };
+    const c = compile(ws);
+    assert.equal(c.error, null);
+    assert.ok(!c.code.includes('INJECTION') && !c.code.includes('ANCIEN'), JSON.stringify(c.code));
+    assert.ok(!/[\r\u2028\u2029]/.test(c.code));
+  }
+});
+
+test('exécution : le code enregistré avant une mise à jour est lui aussi neutralisé', async () => {
+  // code compilé « à l'ancienne », avec un retour chariot dans un commentaire
+  const code = "// note\rtank.quand('demarrage','tout',function(){ tank.dire('INJECTION'); });\ntank.quand('ordres','tout',function(){ tank.attendre(5); });\n";
+  const r = await runFast({ entrants: [{ name: 'A', color: '#ff0000', code }, dummy()], seed: 1, maxTicks: 5 });
+  assert.ok(!r.logs.some((l) => l.text.includes('INJECTION')));
+});
+
 test('bac à sable : un programme qui ne rend pas la main arrête le combat et est identifié', async () => {
   const code = "tank.quand('ordres','tout',function(){ for(;;){} });";
   await assert.rejects(

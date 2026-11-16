@@ -48,7 +48,7 @@ export const SETTINGS_LIMITS = Object.freeze({
   minDurationSec: [10, 600],
   maxDurationSec: [10, 600],
   maxOpponents: [1, 3],
-  countdownSec: [0, 30],
+  countdownSec: [2, 30],
   maxRunningMatches: [1, 64],
   maxTanksPerPlayer: [1, 200],
 });

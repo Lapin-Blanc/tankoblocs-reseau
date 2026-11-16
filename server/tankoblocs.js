@@ -71,6 +71,37 @@ export const TEMPLATE = TankBots.TEMPLATE;
 export const PALETTE = TankRuntime.PALETTE;
 
 /**
+ * Copie d'un état Blockly sans les commentaires de blocs.
+ * Blockly recopie leur texte en « // … » dans le code généré, sans le
+ * nettoyer : un retour chariot (ou U+2028/U+2029) y terminerait le
+ * commentaire et la suite deviendrait du code.
+ */
+export function safeWorkspace(ws) {
+  const strip = (v) => {
+    if (Array.isArray(v)) return v.map(strip);
+    if (!v || typeof v !== 'object') return v;
+    const out = {};
+    for (const [k, val] of Object.entries(v)) {
+      if (k === 'comment') continue; // ancien format (état sérialisé d'un bloc)
+      if (k === 'icons' && val && typeof val === 'object') {
+        const icons = { ...val };
+        delete icons.comment;
+        out[k] = strip(icons);
+        continue;
+      }
+      out[k] = strip(val);
+    }
+    return out;
+  };
+  return strip(ws);
+}
+
+/** Dernière barrière : aucun caractère de fin de ligne autre que \n dans le code. */
+export function safeCode(code) {
+  return code.replace(/[\r\u2028\u2029]/g, ' ');
+}
+
+/**
  * Compile un état Blockly.
  * @returns {{ code: string|null, error: string|null, blocks: number }}
  */
@@ -80,13 +111,14 @@ export function compile(workspace) {
   }
   const json = JSON.stringify(workspace);
   if (json.length > MAX_WORKSPACE_BYTES) return { code: null, error: 'programme trop gros', blocks: 0 };
+  workspace = safeWorkspace(workspace);
   // Blockly signale les valeurs refusées dans la console : on les garde pour nous
   const warn = console.warn;
   const warnings = [];
   console.warn = (...args) => warnings.push(args.join(' '));
   try {
     const info = TankBlocks.describeState(workspace);
-    const code = TankBlocks.compileState(workspace, true);
+    const code = safeCode(TankBlocks.compileState(workspace, true));
     if (code.length > MAX_CODE_BYTES) return { code: null, error: 'programme trop gros', blocks: info.blocks };
     return { code, error: null, blocks: info.blocks, warnings };
   } catch (err) {

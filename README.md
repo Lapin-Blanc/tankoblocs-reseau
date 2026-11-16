@@ -1,5 +1,7 @@
 # TankoBlocs Réseau
 
+[![Tests](https://github.com/Lapin-Blanc/tankoblocs-reseau/actions/workflows/ci.yml/badge.svg)](https://github.com/Lapin-Blanc/tankoblocs-reseau/actions/workflows/ci.yml)
+
 La version multijoueur de [TankoBlocs](https://github.com/Lapin-Blanc/tankoblocs), pour jouer **en classe, sur le réseau local**. Chaque joueur programme son tank avec des blocs, l'entraîne contre les bots, puis l'engage dans des combats en direct contre les tanks des autres.
 
 - **Comptes** : pseudo et mot de passe, inscription avec le code du cours donné par l'enseignant. Chacun retrouve ses tanks d'un cours à l'autre, depuis n'importe quel ordinateur.
@@ -144,6 +146,8 @@ Les tests couvrent :
 - l'identité exacte entre un combat calculé dans un fil d'exécution et le moteur de référence ;
 - un vrai combat en direct entre deux joueurs et un bot, avec historique, classement et replay identique ;
 - le salon : rejoindre, quitter, déconnexion, compléter avec des bots, annuler, arrêt par l'enseignant.
+
+À chaque envoi sur GitHub, l'intégration continue (`.github/workflows/ci.yml`) lance aussi ces tests avec Node 24 et 26. Elle construit l'image Docker, y calcule un combat avec les options de permissions du serveur (`scripts/docker-smoke.js`), puis démarre le serveur avec `docker compose`.
 
 ## Licence
 

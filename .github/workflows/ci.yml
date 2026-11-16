@@ -1,0 +1,70 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [24, 26]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  docker:
+    name: Image Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Construire l'image
+        run: docker build -t tankoblocs-reseau .
+
+      - name: Combat et permissions dans l'image
+        run: >
+          docker run --rm
+          -v "$PWD/scripts/docker-smoke.js:/app/scripts/docker-smoke.js:ro"
+          tankoblocs-reseau
+          node --permission --allow-worker
+          --allow-fs-read=/app --allow-fs-read=/data --allow-fs-write=/data
+          --disable-warning=SecurityWarning
+          scripts/docker-smoke.js
+
+      - name: Démarrer avec docker compose
+        run: |
+          docker compose up -d
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8080/api/status && break
+            sleep 1
+          done
+          echo
+          curl -fsS http://localhost:8080/api/status | grep -q '"setupNeeded":true'
+          curl -fsS http://localhost:8080/ | grep -q 'TankoBlocs'
+          for i in $(seq 1 30); do
+            [ "$(docker inspect -f '{{.State.Health.Status}}' tankoblocs-reseau)" = healthy ] && break
+            sleep 2
+          done
+          docker inspect -f '{{.State.Health.Status}}' tankoblocs-reseau | grep -q healthy
+
+      - name: Messages du serveur
+        if: always()
+        run: docker compose ps; docker compose logs
+
+      - name: Arrêter
+        if: always()
+        run: docker compose down -v
